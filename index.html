@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<title>Plan FIRST — Run Less Run Faster</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --ground:#F5F7F8; --surface:#FFFFFF; --ink:#1A2530; --muted:#5C6C7B;
+  --accent:#C74A20; --accent-soft:#F7E8E1; --steel:#3D6B8E; --steel-soft:#E7EEF4;
+  --line:#DCE3E8; --ok:#2E7D4F; --err:#B3341F; --race:#FFF6EC;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --cond:"Avenir Next Condensed","Helvetica Neue Condensed","Arial Narrow","Roboto Condensed",sans-serif;
+  --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --ground:#10161D; --surface:#18212B; --ink:#E8ECEF; --muted:#94A2AF;
+    --accent:#E0653A; --accent-soft:#33231C; --steel:#7FA8C7; --steel-soft:#1E2B37;
+    --line:#2A3542; --ok:#5FBF8A; --err:#E8785F; --race:#241C13; }
+}
+:root[data-theme="dark"]{ --ground:#10161D; --surface:#18212B; --ink:#E8ECEF; --muted:#94A2AF;
+  --accent:#E0653A; --accent-soft:#33231C; --steel:#7FA8C7; --steel-soft:#1E2B37;
+  --line:#2A3542; --ok:#5FBF8A; --err:#E8785F; --race:#241C13; }
+:root[data-theme="light"]{ --ground:#F5F7F8; --surface:#FFFFFF; --ink:#1A2530; --muted:#5C6C7B;
+  --accent:#C74A20; --accent-soft:#F7E8E1; --steel:#3D6B8E; --steel-soft:#E7EEF4;
+  --line:#DCE3E8; --ok:#2E7D4F; --err:#B3341F; --race:#FFF6EC; }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+
+/* masthead */
+header.mast{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:26px}
+.mast .eyebrow{font-family:var(--cond);letter-spacing:.18em;font-size:13px;color:var(--accent);font-weight:600}
+.mast h1{font-family:var(--cond);font-weight:700;font-size:clamp(30px,5vw,44px);letter-spacing:.02em;margin:0;text-transform:uppercase;text-wrap:balance}
+.mast .sub{color:var(--muted);font-size:14px;margin-left:auto;max-width:34ch}
+
+h2.sec{font-family:var(--cond);text-transform:uppercase;letter-spacing:.14em;font-size:15px;font-weight:700;margin:34px 0 12px;display:flex;align-items:center;gap:10px}
+h2.sec::after{content:"";flex:1;border-top:1px solid var(--line)}
+h2.sec .n{color:var(--accent);font-family:var(--mono);font-size:13px}
+
+/* config panel */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+label.fld{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600}
+label.fld .hint{font-weight:400;color:var(--muted)}
+input,select,button{font:inherit;color:var(--ink)}
+input,select{background:var(--ground);border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input.time{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:8px}
+.day{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.day b{font-family:var(--cond);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.msgs{margin-top:14px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.msgs .bad{color:var(--err)} .msgs .good{color:var(--ok)}
+
+/* paces strip */
+table.paces{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:13px}
+table.paces th{font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-weight:600;font-size:12px;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--ink);text-align:left}
+table.paces td{padding:7px 10px;border-bottom:1px solid var(--line);font-family:var(--mono);font-variant-numeric:tabular-nums}
+table.paces td:first-child{font-family:var(--body);font-weight:600}
+table.paces tr:last-child td{border-bottom:none}
+.tablewrap{overflow-x:auto}
+.twocol{display:grid;gap:18px;grid-template-columns:1fr 1fr}
+@media(max-width:760px){.twocol{grid-template-columns:1fr}}
+
+/* weeks */
+.week{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.week.race{background:var(--race);border-color:var(--accent)}
+.whead{display:flex;align-items:baseline;gap:14px;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.whead .num{font-family:var(--cond);font-weight:700;font-size:22px;color:var(--accent);min-width:2ch}
+.whead .range{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.whead .cross{margin-left:auto;font-size:12px;color:var(--muted)}
+.wbody{display:grid;grid-template-columns:repeat(3,1fr)}
+@media(max-width:860px){.wbody{grid-template-columns:1fr}}
+.wo{padding:12px 16px;border-right:1px solid var(--line);min-width:0}
+.wo:last-child{border-right:none}
+@media(max-width:860px){.wo{border-right:none;border-bottom:1px solid var(--line)}.wo:last-child{border-bottom:none}}
+.wo h3{font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-size:13px;font-weight:700;margin:0 0 2px}
+.wo .when{font-size:12px;color:var(--muted);margin-bottom:8px;font-variant-numeric:tabular-nums}
+.wo ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.wo li .t{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.wo li .pk{color:var(--muted);font-size:12px}
+.wo .note{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.4}
+.chip{display:inline-block;border-radius:3px;padding:0 6px;font-size:11px;font-family:var(--cond);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.chip.q{background:var(--accent-soft);color:var(--accent)}
+.chip.e{background:var(--steel-soft);color:var(--steel)}
+.racebanner{font-family:var(--cond);text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--accent);font-size:16px}
+
+/* registro */
+details.reg{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;font-size:12.5px}
+details.reg summary{cursor:pointer;font-family:var(--cond);letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--muted);user-select:none}
+details.reg summary .okmark{color:var(--ok)}
+.regbody{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.regrow{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.reg label{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:3px;font-weight:600}
+.reg input[type="text"]{width:78px;padding:4px 6px;font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+.reg textarea{width:100%;min-height:40px;background:var(--ground);border:1px solid var(--line);border-radius:4px;padding:6px;font:inherit;font-size:12.5px;color:var(--ink);resize:vertical}
+.repgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+.diff{font-family:var(--mono);font-size:11px;min-height:13px}
+.diff.up{color:var(--err)} .diff.dn{color:var(--ok)}
+.reg .donerow{flex-direction:row;align-items:center;gap:6px;font-size:12px;color:var(--ink)}
+
+.toolbar{display:flex;gap:10px;margin:26px 0 0;flex-wrap:wrap}
+button.primary{background:var(--accent);color:#fff;border:none;border-radius:4px;padding:10px 22px;font-weight:600;cursor:pointer;font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-size:14px}
+button.ghost{background:none;border:1px solid var(--line);border-radius:4px;padding:10px 16px;cursor:pointer;color:var(--muted);font-size:13px}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.foot{margin-top:44px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px;max-width:70ch}
+
+@media print{
+  body{background:#fff;color:#000}
+  .panel,.toolbar,.foot,.mast .sub,details.reg{display:none}
+  .week{break-inside:avoid;border-color:#999}
+  .wrap{padding:0;max-width:none}
+}
+</style>
+
+<div class="wrap">
+<header class="mast">
+  <div>
+    <div class="eyebrow">MÉTODO FIRST</div>
+    <h1>Run Less · Run Faster</h1>
+  </div>
+  <div class="sub">Tres entrenamientos de calidad por semana —&nbsp;series, carrera corta y carrera larga— más dos cruzados.</div>
+</header>
+
+<h2 class="sec"><span class="n">01</span> Configura tu plan</h2>
+<div class="panel">
+  <div class="grid">
+    <label class="fld">Tu marca reciente
+      <span class="hint">Distancia de la marca que introduces</span>
+      <select id="markDist">
+        <option value="0">5 km</option><option value="1">10 km</option>
+        <option value="2">Media maratón</option><option value="3">Maratón</option>
+      </select>
+    </label>
+    <label class="fld">Tiempo (hh:mm:ss o mm:ss)
+      <span class="hint">Entre 16:00 y 40:00 en equivalente 5 km</span>
+      <input class="time" id="markTime" placeholder="22:50" value="22:50">
+    </label>
+    <label class="fld">Distancia que quieres entrenar
+      <span class="hint">Duración del plan según el método</span>
+      <select id="plan"></select>
+    </label>
+    <label class="fld">Fecha de inicio
+      <span class="hint">Debe ser lunes</span>
+      <input type="date" id="start">
+    </label>
+  </div>
+  <div style="margin-top:18px">
+    <span style="font-size:13px;font-weight:600">Distribución semanal</span>
+    <span style="font-size:12px;color:var(--muted)"> — 3 entrenamientos principales, mínimo 2 cruzados, sin principales en días seguidos</span>
+    <div class="days" id="days"></div>
+  </div>
+  <div class="msgs" id="msgs"></div>
+  <div class="toolbar">
+    <button class="primary" id="go">Calcular entrenamiento</button>
+    <button class="ghost" id="print" hidden>Imprimir / PDF</button>
+    <button class="ghost" id="expLog" hidden>Exportar registros</button>
+    <button class="ghost" id="impLog" hidden>Importar registros</button>
+    <input type="file" id="impFile" accept=".json" hidden>
+  </div>
+</div>
+
+<div id="out" hidden>
+  <h2 class="sec"><span class="n">02</span> Tus ritmos y predicciones</h2>
+  <div class="twocol">
+    <div class="tablewrap"><table class="paces" id="paceTable"></table></div>
+    <div class="tablewrap"><table class="paces" id="predTable"></table></div>
+  </div>
+  <h2 class="sec"><span class="n">03</span> <span id="planTitle"></span></h2>
+  <div id="weeks"></div>
+</div>
+
+<p class="foot">Generado a partir de la hoja de cálculo FIRST 2.2 (foroatletismo.com), basada en el método FIRST del libro <em>Run Less, Run Faster</em> (Furman Institute). Antes de iniciar el plan se recomiendan tres meses de adaptación con 20–30&nbsp;km semanales. CAL: calentamiento · ENF: enfriamiento · REC: recuperación.</p>
+</div>
+
+<script>
+const DATA = {"base":{"t400":67.0,"t600":103.0,"t800":138.0,"t1000":175.0,"t1200":214.0,"t1600":293.0,"t2000":371.0,"corto":202.0,"medio":212.0,"largo":221.0,"facil":262.0,"mar":221.0,"mmar":211.0},"inc":{"t400":0.805555,"t600":1.208333,"t800":1.611111,"t1000":2.013889,"t1200":2.409722,"t1600":3.215278,"t2000":4.027778,"corto":2.0,"medio":2.0,"largo":2.0,"facil":2.0,"mar":2.305555,"mmar":2.194445},"marcas":[[960.0,2009.0,4450.0,9342.0],[970.0,2029.0,4496.0,9439.0],[980.0,2050.0,4542.0,9537.0],[990.0,2071.0,4589.0,9634.0],[1000.0,2092.0,4635.0,9731.0],[1010.0,2113.0,4681.0,9828.0],[1020.0,2134.0,4728.0,9926.0],[1030.0,2155.0,4774.0,10023.0],[1040.0,2176.0,4820.0,10120.0],[1050.0,2197.0,4867.0,10218.0],[1060.0,2218.0,4913.0,10315.0],[1070.0,2239.0,4960.0,10412.0],[1080.0,2260.0,5006.0,10510.0],[1090.0,2281.0,5052.0,10607.0],[1100.0,2301.0,5099.0,10704.0],[1110.0,2322.0,5145.0,10802.0],[1120.0,2343.0,5191.0,10899.0],[1130.0,2364.0,5238.0,10996.0],[1140.0,2385.0,5284.0,11094.0],[1150.0,2406.0,5330.0,11191.0],[1160.0,2427.0,5377.0,11288.0],[1170.0,2448.0,5423.0,11385.0],[1180.0,2469.0,5469.0,11483.0],[1190.0,2490.0,5516.0,11580.0],[1200.0,2511.0,5562.0,11677.0],[1210.0,2532.0,5608.0,11775.0],[1220.0,2552.0,5655.0,11872.0],[1230.0,2573.0,5701.0,11969.0],[1240.0,2594.0,5747.0,12067.0],[1250.0,2615.0,5794.0,12164.0],[1260.0,2636.0,5840.0,12261.0],[1270.0,2657.0,5887.0,12359.0],[1280.0,2678.0,5933.0,12456.0],[1290.0,2699.0,5979.0,12553.0],[1300.0,2720.0,6026.0,12651.0],[1310.0,2741.0,6072.0,12748.0],[1320.0,2762.0,6118.0,12845.0],[1330.0,2783.0,6165.0,12942.0],[1340.0,2804.0,6211.0,13040.0],[1350.0,2824.0,6257.0,13137.0],[1360.0,2845.0,6304.0,13234.0],[1370.0,2866.0,6350.0,13332.0],[1380.0,2887.0,6396.0,13429.0],[1390.0,2908.0,6443.0,13526.0],[1400.0,2929.0,6489.0,13624.0],[1410.0,2950.0,6535.0,13721.0],[1420.0,2971.0,6582.0,13818.0],[1430.0,2992.0,6628.0,13916.0],[1440.0,3013.0,6674.0,14013.0],[1450.0,3034.0,6721.0,14110.0],[1460.0,3055.0,6767.0,14208.0],[1470.0,3076.0,6814.0,14305.0],[1480.0,3096.0,6860.0,14402.0],[1490.0,3117.0,6906.0,14499.0],[1500.0,3138.0,6953.0,14597.0],[1510.0,3159.0,6999.0,14694.0],[1520.0,3180.0,7045.0,14791.0],[1530.0,3201.0,7092.0,14889.0],[1540.0,3222.0,7138.0,14986.0],[1550.0,3243.0,7184.0,15083.0],[1560.0,3264.0,7231.0,15181.0],[1570.0,3285.0,7277.0,15278.0],[1580.0,3306.0,7323.0,15375.0],[1590.0,3327.0,7370.0,15473.0],[1600.0,3348.0,7416.0,15570.0],[1610.0,3368.0,7462.0,15667.0],[1620.0,3389.0,7509.0,15764.0],[1630.0,3410.0,7555.0,15862.0],[1640.0,3431.0,7602.0,15959.0],[1650.0,3452.0,7648.0,16056.0],[1660.0,3473.0,7694.0,16154.0],[1670.0,3494.0,7741.0,16251.0],[1680.0,3515.0,7787.0,16348.0],[1690.0,3536.0,7833.0,16446.0],[1700.0,3557.0,7880.0,16543.0],[1710.0,3578.0,7926.0,16640.0],[1720.0,3599.0,7972.0,16738.0],[1730.0,3620.0,8019.0,16835.0],[1740.0,3640.0,8065.0,16932.0],[1750.0,3661.0,8111.0,17030.0],[1760.0,3682.0,8158.0,17127.0],[1770.0,3703.0,8204.0,17224.0],[1780.0,3724.0,8250.0,17321.0],[1790.0,3745.0,8297.0,17419.0],[1800.0,3766.0,8343.0,17516.0],[1810.0,3787.0,8389.0,17613.0],[1820.0,3808.0,8436.0,17711.0],[1830.0,3829.0,8482.0,17808.0],[1840.0,3850.0,8529.0,17905.0],[1850.0,3871.0,8575.0,18003.0],[1860.0,3892.0,8621.0,18100.0],[1870.0,3912.0,8668.0,18197.0],[1880.0,3933.0,8714.0,18295.0],[1890.0,3954.0,8760.0,18392.0],[1900.0,3975.0,8807.0,18489.0],[1910.0,3996.0,8853.0,18587.0],[1920.0,4017.0,8899.0,18684.0],[1930.0,4038.0,8946.0,18781.0],[1940.0,4059.0,8992.0,18878.0],[1950.0,4080.0,9038.0,18976.0],[1960.0,4101.0,9085.0,19073.0],[1970.0,4122.0,9131.0,19170.0],[1980.0,4143.0,9177.0,19268.0],[1990.0,4163.0,9224.0,19365.0],[2000.0,4184.0,9270.0,19462.0],[2010.0,4205.0,9316.0,19560.0],[2020.0,4226.0,9363.0,19657.0],[2030.0,4247.0,9409.0,19754.0],[2040.0,4268.0,9456.0,19852.0],[2050.0,4289.0,9502.0,19949.0],[2060.0,4310.0,9548.0,20046.0],[2070.0,4331.0,9595.0,20144.0],[2080.0,4352.0,9641.0,20241.0],[2090.0,4373.0,9687.0,20338.0],[2100.0,4394.0,9734.0,20435.0],[2110.0,4415.0,9780.0,20533.0],[2120.0,4435.0,9826.0,20630.0],[2130.0,4456.0,9873.0,20727.0],[2140.0,4477.0,9919.0,20825.0],[2150.0,4498.0,9965.0,20922.0],[2160.0,4519.0,10012.0,21019.0],[2170.0,4540.0,10058.0,21117.0],[2180.0,4561.0,10104.0,21214.0],[2190.0,4582.0,10151.0,21311.0],[2200.0,4603.0,10197.0,21409.0],[2210.0,4624.0,10243.0,21506.0],[2220.0,4645.0,10290.0,21603.0],[2230.0,4666.0,10336.0,21701.0],[2240.0,4687.0,10383.0,21798.0],[2250.0,4707.0,10429.0,21895.0],[2260.0,4728.0,10475.0,21992.0],[2270.0,4749.0,10522.0,22090.0],[2280.0,4770.0,10568.0,22187.0],[2290.0,4791.0,10614.0,22284.0],[2300.0,4812.0,10661.0,22382.0],[2310.0,4833.0,10707.0,22479.0],[2320.0,4854.0,10753.0,22576.0],[2330.0,4875.0,10800.0,22674.0],[2340.0,4896.0,10846.0,22771.0],[2350.0,4917.0,10892.0,22868.0],[2360.0,4938.0,10939.0,22966.0],[2370.0,4959.0,10985.0,23063.0],[2380.0,4979.0,11031.0,23160.0],[2390.0,5000.0,11078.0,23257.0],[2400.0,5021.0,11124.0,23355.0]],"plans":[{"id":"5K","title":"5 km — 12 semanas","weeks":[{"week":1,"series":[{"reps":8,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"3K","pace":"corto"}],"long":[{"dist":"8K","pace":"largo"}]},{"week":2,"series":[{"reps":5,"rec":"400m","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"5K","pace":"corto"}],"long":[{"dist":"10K","pace":"largo"}]},{"week":3,"series":[{"reps":2,"rec":"400m","dist_m":1600,"pace":"t1600"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"3K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"corto"}],"long":[{"dist":"8K","pace":"largo"}]},{"week":4,"series":[{"reps":1,"rec":"400m","dist_m":400,"pace":"t400"},{"reps":1,"rec":"400m","dist_m":600,"pace":"t600"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"400m","dist_m":600,"pace":"t600"},{"reps":1,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"6,5K","pace":"medio"}],"long":[{"dist":"10K","pace":"largo"}]},{"week":5,"series":[{"reps":4,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"5K","pace":"corto"}],"long":[{"dist":"11K","pace":"largo"}]},{"week":6,"series":[{"reps":1,"rec":"400m","dist_m":1600,"pace":"t1600"},{"reps":1,"rec":"400m","dist_m":1200,"pace":"t1200"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"1,5K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"1,5K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"1,5K","pace":"corto"}],"long":[{"dist":"10K","pace":"largo"}]},{"week":7,"series":[{"reps":10,"rec":"90sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"6,5K","pace":"medio"}],"long":[{"dist":"13K","pace":"largo"}]},{"week":8,"series":[{"reps":6,"rec":"90sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"3K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"corto"}],"long":[{"dist":"11K","pace":"largo"}]},{"week":9,"series":[{"reps":4,"rec":"400m","dist_m":1200,"pace":"t1200"}],"tempo":[{"dist":"5K","pace":"corto"}],"long":[{"dist":"11K","pace":"largo"}]},{"week":10,"series":[{"reps":5,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"3K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"1,5K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"corto"}],"long":[{"dist":"10K","pace":"largo"}]},{"week":11,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"5K","pace":"corto"}],"long":[{"dist":"10K","pace":"largo"}]},{"week":12,"series":[{"reps":6,"rec":"60sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"5K","pace":"facil"}],"long":[{"dist":"CARRERA DE 5KM","pace":"race"}]}]},{"id":"10K","title":"10 km — 12 semanas","weeks":[{"week":1,"series":[{"reps":8,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"3K","pace":"corto"}],"long":[{"dist":"10K","pace":"largo"}]},{"week":2,"series":[{"reps":5,"rec":"400m","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"3K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"corto"}],"long":[{"dist":"11K","pace":"largo"}]},{"week":3,"series":[{"reps":2,"rec":"400m","dist_m":1600,"pace":"t1600"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"6,5K","pace":"medio"}],"long":[{"dist":"13K","pace":"largo"}]},{"week":4,"series":[{"reps":1,"rec":"400m","dist_m":400,"pace":"t400"},{"reps":1,"rec":"400m","dist_m":600,"pace":"t600"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"400m","dist_m":600,"pace":"t600"},{"reps":1,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"3K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"1,5K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"corto"}],"long":[{"dist":"14K","pace":"largo"}]},{"week":5,"series":[{"reps":4,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"6,5K","pace":"corto"}],"long":[{"dist":"16K","pace":"largo"}]},{"week":6,"series":[{"reps":1,"rec":"400m","dist_m":1600,"pace":"t1600"},{"reps":1,"rec":"400m","dist_m":1200,"pace":"t1200"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"8K","pace":"medio"}],"long":[{"dist":"13K","pace":"largo"}]},{"week":7,"series":[{"reps":10,"rec":"90sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"6,5K","pace":"corto"}],"long":[{"dist":"16K","pace":"largo"}]},{"week":8,"series":[{"reps":6,"rec":"90sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"corto"},{"dist":"1,5K","pace":"facil"},{"dist":"1,5K","pace":"corto"}],"long":[{"dist":"13K","pace":"largo"}]},{"week":9,"series":[{"reps":4,"rec":"400m","dist_m":1200,"pace":"t1200"}],"tempo":[{"dist":"5K","pace":"corto"}],"long":[{"dist":"16K","pace":"largo"}]},{"week":10,"series":[{"reps":5,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"10K","pace":"medio"}],"long":[{"dist":"13K","pace":"largo"}]},{"week":11,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"5K","pace":"corto"}],"long":[{"dist":"11K","pace":"largo"}]},{"week":12,"series":[{"reps":6,"rec":"60sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"5K","pace":"facil"}],"long":[{"dist":"CARRERA DE 10KM","pace":"race"}]}]},{"id":"HM","title":"Media maratón — 16 semanas","weeks":[{"week":1,"series":[{"reps":12,"rec":"90sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"corto"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"12,5K","pace":"mmar","plus":13}]},{"week":2,"series":[{"reps":1,"rec":"400m","dist_m":400,"pace":"t400"},{"reps":1,"rec":"400m","dist_m":600,"pace":"t600"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"400m","dist_m":1200,"pace":"t1200"},{"reps":1,"rec":"400m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"400m","dist_m":600,"pace":"t600"},{"reps":1,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"14K","pace":"mmar","plus":13}]},{"week":3,"series":[{"reps":6,"rec":"90sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"corto"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"16K","pace":"facil"}]},{"week":4,"series":[{"reps":5,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"5K","pace":"corto"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"14K","pace":"mmar","plus":13}]},{"week":5,"series":[{"reps":3,"rec":"60sg","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"10K","pace":"largo"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"18K","pace":"mmar","plus":19}]},{"week":6,"series":[{"reps":2,"rec":"2min","dist_m":1200,"pace":"t1200"},{"reps":4,"rec":"2min","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"medio"},{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"16K","pace":"mmar","plus":13}]},{"week":7,"series":[{"reps":6,"rec":"90sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"19K","pace":"mmar","plus":19}]},{"week":8,"series":[{"reps":2,"rec":"2,5min","block":"bloques"},{"reps":6,"rec":"90sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"medio"},{"dist":"1,5K","pace":"facil"},{"dist":"3K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"12,5K","pace":"mmar","plus":13}]},{"week":9,"series":[{"reps":2,"rec":"60sg","dist_m":1600,"pace":"t1600"},{"reps":2,"rec":"60sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"21K","pace":"mmar","plus":19}]},{"week":10,"series":[{"reps":4,"rec":"2min","dist_m":1200,"pace":"t1200"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"10K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"16K","pace":"mmar","plus":13}]},{"week":11,"series":[{"reps":1,"rec":"400m","dist_m":1000,"pace":"t1000"},{"reps":1,"rec":"400m","dist_m":2000,"pace":"t2000"},{"reps":2,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"22K","pace":"mmar","plus":19}]},{"week":12,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"10K","pace":"facil"}],"long":[{"dist":"16K","pace":"mmar","plus":13}]},{"week":13,"series":[{"reps":10,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"25K","pace":"mmar","plus":19}]},{"week":14,"series":[{"reps":2,"rec":"2min","dist_m":1200,"pace":"t1200"},{"reps":4,"rec":"2min","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"19K","pace":"mmar","plus":13}]},{"week":15,"series":[{"reps":5,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"12,5K","pace":"mmar","plus":13}]},{"week":16,"series":[{"reps":6,"rec":"60sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"5K","pace":"facil"}],"long":[{"dist":"CARRERA MEDIA MARATHON","pace":"race"}]}]},{"id":"M_PRINC","title":"Maratón principiantes — 16 semanas","weeks":[{"week":1,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"3K","pace":"corto"},{"dist":"3K","pace":"facil"}],"long":[{"dist":"13K","pace":"mar","plus":19}]},{"week":2,"series":[{"reps":4,"rec":"2min","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"15K","pace":"mar","plus":28}]},{"week":3,"series":[{"reps":1,"rec":"200m","dist_m":1200,"pace":"t1200"},{"reps":1,"rec":"200m","dist_m":1000,"pace":"t1000"},{"reps":1,"rec":"200m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"200m","dist_m":600,"pace":"t600"},{"reps":1,"rec":"200m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"largo"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"16K","pace":"mar","plus":28}]},{"week":4,"series":[{"reps":5,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"17K","pace":"mar","plus":28}]},{"week":5,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"6,5K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"20K","pace":"mar","plus":28}]},{"week":6,"series":[{"reps":2,"rec":"2min","dist_m":1200,"pace":"t1200"},{"reps":4,"rec":"2min","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"22K","pace":"mar","plus":28}]},{"week":7,"series":[{"reps":6,"rec":"90sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"10K","pace":"largo"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"16K","pace":"mar","plus":9}]},{"week":8,"series":[{"reps":2,"rec":"2,5min","block":"bloques"},{"reps":6,"rec":"90sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"corto"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"24K","pace":"mar","plus":19}]},{"week":9,"series":[{"reps":2,"rec":"60sg","dist_m":1600,"pace":"t1600"},{"reps":2,"rec":"60sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"6,5K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"20K","pace":"mar","plus":19}]},{"week":10,"series":[{"reps":4,"rec":"2min","dist_m":1200,"pace":"t1200"}],"tempo":[{"dist":"16K","pace":"mar"}],"long":[{"dist":"24K","pace":"mar","plus":12}]},{"week":11,"series":[{"reps":1,"rec":"400m","dist_m":1000,"pace":"t1000"},{"reps":1,"rec":"400m","dist_m":2000,"pace":"t2000"},{"reps":2,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"30K","pace":"mar","plus":28}]},{"week":12,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"16K","pace":"mar"}],"long":[{"dist":"21K","pace":"mar","plus":9}]},{"week":13,"series":[{"reps":10,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"13K","pace":"mar"}],"long":[{"dist":"32K","pace":"mar","plus":19}]},{"week":14,"series":[{"reps":8,"rec":"90sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"21K","pace":"mar"}]},{"week":15,"series":[{"reps":5,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"corto"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"13K","pace":"mar"}]},{"week":16,"series":[{"reps":6,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"5K","pace":"mar"}],"long":[{"dist":"CARRERA MARATHON","pace":"race"}]}]},{"id":"M","title":"Maratón — 16 semanas","weeks":[{"week":1,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"3K","pace":"corto"},{"dist":"3K","pace":"facil"}],"long":[{"dist":"21K","pace":"mar","plus":19}]},{"week":2,"series":[{"reps":4,"rec":"2min","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"24K","pace":"mar","plus":28}]},{"week":3,"series":[{"reps":1,"rec":"200m","dist_m":1200,"pace":"t1200"},{"reps":1,"rec":"200m","dist_m":1000,"pace":"t1000"},{"reps":1,"rec":"200m","dist_m":800,"pace":"t800"},{"reps":1,"rec":"200m","dist_m":600,"pace":"t600"},{"reps":1,"rec":"200m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"largo"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"27K","pace":"mar","plus":28}]},{"week":4,"series":[{"reps":5,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"6,5K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"32K","pace":"mar","plus":37}]},{"week":5,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"corto"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"29K","pace":"mar","plus":28}]},{"week":6,"series":[{"reps":2,"rec":"2min","dist_m":1200,"pace":"t1200"},{"reps":4,"rec":"2min","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"32K","pace":"mar","plus":28}]},{"week":7,"series":[{"reps":6,"rec":"90sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"10K","pace":"largo"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"21K","pace":"mar","plus":9}]},{"week":8,"series":[{"reps":2,"rec":"2,5min","block":"bloques"},{"reps":6,"rec":"90sg","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"corto"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"29K","pace":"mar","plus":19}]},{"week":9,"series":[{"reps":2,"rec":"60sg","dist_m":1600,"pace":"t1600"},{"reps":2,"rec":"60sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"6,5K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"32K","pace":"mar","plus":19}]},{"week":10,"series":[{"reps":4,"rec":"2min","dist_m":1200,"pace":"t1200"}],"tempo":[{"dist":"16K","pace":"mar"}],"long":[{"dist":"24K","pace":"mar","plus":9}]},{"week":11,"series":[{"reps":1,"rec":"400m","dist_m":1000,"pace":"t1000"},{"reps":1,"rec":"400m","dist_m":2000,"pace":"t2000"},{"reps":2,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"32K","pace":"mar","plus":19}]},{"week":12,"series":[{"reps":3,"rec":"400m","dist_m":1600,"pace":"t1600"}],"tempo":[{"dist":"16K","pace":"mar"}],"long":[{"dist":"24K","pace":"mar","plus":9}]},{"week":13,"series":[{"reps":10,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"13K","pace":"mar"}],"long":[{"dist":"32K","pace":"mar","plus":9}]},{"week":14,"series":[{"reps":8,"rec":"90sg","dist_m":800,"pace":"t800"}],"tempo":[{"dist":"1,5K","pace":"facil"},{"dist":"8K","pace":"medio"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"21K","pace":"mar"}]},{"week":15,"series":[{"reps":5,"rec":"400m","dist_m":1000,"pace":"t1000"}],"tempo":[{"dist":"3K","pace":"facil"},{"dist":"5K","pace":"corto"},{"dist":"1,5K","pace":"facil"}],"long":[{"dist":"16K","pace":"mar"}]},{"week":16,"series":[{"reps":6,"rec":"400m","dist_m":400,"pace":"t400"}],"tempo":[{"dist":"5K","pace":"mar"}],"long":[{"dist":"CARRERA MARATHON","pace":"race"}]}]}]};
+
+const PACE_NAMES = {corto:"tempo corto", medio:"tempo medio", largo:"tempo largo",
+  facil:"fácil", mar:"ritmo maratón", mmar:"ritmo ½ maratón"};
+const DAY_NAMES = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const DAY_OPTS = ["Descanso","Entr. Cruzado","Series","Carrera Corta","Carrera Larga"];
+const DAY_DEFAULT = ["Entr. Cruzado","Series","Entr. Cruzado","Entr. Cruzado","Carrera Corta","Descanso","Carrera Larga"];
+const QUALITY = ["Series","Carrera Corta","Carrera Larga"];
+const RACE_DISTS = [5,10,21.1,42.2];
+
+const $ = id => document.getElementById(id);
+
+/* ---------- helpers ---------- */
+function parseTime(s){
+  const p = s.trim().split(":").map(Number);
+  if (p.some(isNaN) || p.length < 2 || p.length > 3) return null;
+  return p.length === 2 ? p[0]*60 + p[1] : p[0]*3600 + p[1]*60 + p[2];
+}
+function fmt(sec, forceH){
+  sec = Math.round(sec);
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  const mm = String(m).padStart(2,"0"), ss = String(s).padStart(2,"0");
+  return (h || forceH) ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}
+function fmtPace(sec){ return fmt(sec) + "/km"; }
+
+/* equivalent 5K time from a mark at any distance (nearest row in MARCAS) */
+function to5k(distIdx, t){
+  if (distIdx === 0) return t;
+  let best = DATA.marcas[0][0], bestD = Infinity;
+  for (const row of DATA.marcas){
+    const d = Math.abs(row[distIdx] - t);
+    if (d < bestD){ bestD = d; best = row[0]; }
+  }
+  return best;
+}
+/* pace/time value for a key given 5K time (VLOOKUP TRUE semantics: floor to 10 s bucket) */
+function paceVal(key, t5k){
+  const steps = Math.min(144, Math.max(0, Math.floor((t5k - 960) / 10)));
+  return DATA.base[key] + steps * DATA.inc[key];
+}
+function predictions(t5k){
+  let row = DATA.marcas[0];
+  for (const r of DATA.marcas){ if (r[0] <= t5k) row = r; else break; }
+  return row;
+}
+function paceLabel(p){
+  let s = PACE_NAMES[p.pace] || p.pace;
+  if (p.plus) s += ` +${p.plus} s`;
+  return s;
+}
+function paceOf(p, t5k){ return paceVal(p.pace, t5k) + (p.plus || 0); }
+function parseDistKm(s){
+  const m = s.match(/^([\d,.]+)\s*K/i);
+  return m ? parseFloat(m[1].replace(",", ".")) : null;
+}
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+/* ---------- form setup ---------- */
+DATA.plans.forEach((p,i) => $("plan").insertAdjacentHTML("beforeend",
+  `<option value="${i}">${p.title.replace("—","·")}</option>`));
+
+const d0 = new Date(); d0.setDate(d0.getDate() + ((8 - d0.getDay()) % 7 || 7));
+$("start").value = d0.toISOString().slice(0,10);
+
+DAY_NAMES.forEach((n,i) => {
+  $("days").insertAdjacentHTML("beforeend", `<div class="day"><b>${n}</b>
+    <select data-day="${i}">${DAY_OPTS.map(o =>
+      `<option${o===DAY_DEFAULT[i] ? " selected" : ""}>${o}</option>`).join("")}</select></div>`);
+});
+
+function validate(){
+  const sel = [...document.querySelectorAll("[data-day]")].map(s => s.value);
+  const errs = [];
+  const t5kRaw = parseTime($("markTime").value);
+  if (t5kRaw === null) errs.push("Introduce un tiempo válido (mm:ss o hh:mm:ss).");
+  else {
+    const t5k = to5k(+$("markDist").value, t5kRaw);
+    if (t5k < 960 || t5k > 2400) errs.push("La marca equivale a un 5 km fuera del rango 16:00–40:00 de la tabla.");
+  }
+  const d = new Date($("start").value + "T12:00");
+  if (isNaN(d) ) errs.push("Elige una fecha de inicio.");
+  else if (d.getDay() !== 1) errs.push("La fecha de inicio no es un lunes: cámbiala.");
+  for (const q of QUALITY)
+    if (sel.filter(v => v === q).length !== 1) errs.push(`Asigna «${q}» a exactamente un día.`);
+  if (sel.filter(v => v === "Entr. Cruzado").length < 2)
+    errs.push("Faltan entrenamientos cruzados: se necesitan al menos 2 por semana.");
+  for (let i = 0; i < 6; i++)
+    if (QUALITY.includes(sel[i]) && QUALITY.includes(sel[i+1]))
+      errs.push("No pueden ir dos entrenamientos principales en días seguidos.");
+  $("msgs").innerHTML = errs.length
+    ? errs.map(e => `<span class="bad">✕ ${e}</span>`).join("")
+    : `<span class="good">✓ Datos correctos: ¡ya puedes calcular tu entrenamiento!</span>`;
+  $("go").disabled = errs.length > 0;
+  return errs.length ? null : sel;
+}
+document.querySelectorAll("input,select").forEach(el => el.addEventListener("input", validate));
+validate();
+
+/* ---------- render ---------- */
+function seriesLines(series, t5k){
+  const out = [];
+  for (let i = 0; i < series.length; i++){
+    const it = series[i];
+    if (it.block){
+      const nx = series[++i];
+      out.push(`<li>${it.reps} bloques de <span class="t">${nx.reps} × ${nx.dist_m} m — ${fmt(paceVal(nx.pace, t5k))}</span><br>
+        <span class="pk">rec ${nx.rec} entre series · ${it.rec} entre bloques</span></li>`);
+    } else {
+      const tt = paceVal(it.pace, t5k);
+      const perkm = tt * 1000 / it.dist_m;
+      out.push(`<li><span class="t">${it.reps} × ${it.dist_m} m — ${fmt(tt)}</span>
+        <span class="pk">(${fmtPace(perkm)}) · rec ${it.rec}</span></li>`);
+    }
+  }
+  return out.join("");
+}
+function segLines(segs, t5k){
+  return segs.map(s => {
+    if (s.pace === "race")
+      return `<li><span class="racebanner">🏁 ${esc(s.dist)}</span></li>`;
+    const km = parseDistKm(s.dist);
+    const label = km !== null ? `${String(km).replace(".", ",")} km` : esc(s.dist);
+    return `<li><span class="t">${label}</span> @ <span class="t">${fmtPace(paceOf(s, t5k))}</span>
+      <span class="pk">${paceLabel(s)}</span></li>`;
+  }).join("");
+}
+
+/* ---------- registro (resultados) ---------- */
+let logKey = null, logData = {};
+function loadLog(planId, startISO){
+  logKey = `firstlog:${planId}:${startISO}`;
+  try { logData = JSON.parse(localStorage.getItem(logKey)) || {}; }
+  catch { logData = {}; }
+}
+const saveLog = () => localStorage.setItem(logKey, JSON.stringify(logData));
+const woLog = (w, t) => ((logData[w] = logData[w] || {})[t] = logData[w][t] || {});
+
+/* flat list of per-rep targets for a series workout (blocks expanded, like S1..S12 in the sheet) */
+function repTargets(series, t5k){
+  const out = [];
+  for (let i = 0; i < series.length; i++){
+    const it = series[i];
+    if (it.block){
+      const nx = series[++i];
+      for (let r = 0; r < it.reps * nx.reps; r++) out.push(paceVal(nx.pace, t5k));
+    } else {
+      for (let r = 0; r < it.reps; r++) out.push(paceVal(it.pace, t5k));
+    }
+  }
+  return out;
+}
+function regHTML(week, type, targets, targetPace){
+  const g = (logData[week.week] || {})[type] || {};
+  const v = k => esc(String(g[k] ?? ""));
+  let inner = "";
+  if (type === "series")
+    inner = `<div class="repgrid">${targets.map((t,i) => `<label>S${i+1} · obj ${fmt(t)}
+      <input type="text" placeholder="m:ss" data-reg="reps" data-i="${i}" value="${esc(String((g.reps||[])[i] ?? ""))}">
+      <span class="diff" data-diff="${i}"></span></label>`).join("")}</div>`;
+  else
+    inner = `<div class="regrow"><label>Ritmo realizado${targetPace ? ` · obj ${fmt(targetPace)}` : ""}
+      <input type="text" placeholder="m:ss/km" data-reg="rit" value="${v("rit")}"></label>
+      <span class="diff" data-diff="rit"></span></div>`;
+  return `<details class="reg"${g.done || hasData(g) ? " open" : ""}><summary>Registro <span class="okmark">${g.done ? "✓" : ""}</span></summary>
+    <div class="regbody">${inner}
+    <div class="regrow">
+      <label>FCM media<input type="text" data-reg="fcmd" value="${v("fcmd")}"></label>
+      <label>FCM máx<input type="text" data-reg="fcmx" value="${v("fcmx")}"></label>
+      <label>Km reales<input type="text" data-reg="km" value="${v("km")}"></label>
+    </div>
+    <label>Sensaciones<textarea data-reg="sens">${v("sens")}</textarea></label>
+    <label class="donerow"><input type="checkbox" data-reg="done"${g.done ? " checked" : ""}> Entrenamiento realizado</label>
+    </div></details>`;
+}
+const hasData = g => (g.reps || []).some(x => x) || ["rit","fcmd","fcmx","km","sens"].some(k => g[k]);
+
+let currentPlan = null, currentT5k = null;
+$("weeks") && $("weeks").addEventListener("input", e => {
+  const el = e.target, wo = el.closest(".wo");
+  if (!el.dataset.reg || !wo) return;
+  const g = woLog(+wo.dataset.w, wo.dataset.t);
+  if (el.dataset.reg === "reps"){ (g.reps = g.reps || [])[+el.dataset.i] = el.value; }
+  else if (el.dataset.reg === "done"){ g.done = el.checked;
+    wo.querySelector(".okmark").textContent = el.checked ? "✓" : ""; }
+  else g[el.dataset.reg] = el.value;
+  saveLog();
+  updateDiffs(wo);
+});
+function updateDiffs(wo){
+  const w = +wo.dataset.w, t = wo.dataset.t;
+  const g = (logData[w] || {})[t] || {};
+  const week = currentPlan.weeks.find(x => x.week === w);
+  const show = (span, real, target) => {
+    if (real == null || !target){ span.textContent = ""; return; }
+    const d = Math.round(real - target);
+    span.textContent = (d >= 0 ? "+" : "−") + Math.abs(d) + " s";
+    span.className = "diff " + (d > 0 ? "up" : "dn");
+  };
+  if (t === "series"){
+    const targets = repTargets(week.series, currentT5k);
+    wo.querySelectorAll("[data-diff]").forEach(span => {
+      const i = +span.dataset.diff;
+      show(span, g.reps && g.reps[i] ? parseTime(g.reps[i]) : null, targets[i]);
+    });
+  } else {
+    const span = wo.querySelector('[data-diff="rit"]');
+    if (span) show(span, g.rit ? parseTime(g.rit) : null, mainPace(week[t]));
+  }
+}
+function mainPace(segs){
+  const s = segs.find(x => x.pace !== "facil" && x.pace !== "race") || segs[0];
+  return !s || s.pace === "race" ? null : paceOf(s, currentT5k);
+}
+
+/* ---------- config persistence ---------- */
+function saveConfig(){
+  localStorage.setItem("firstcfg", JSON.stringify({
+    markDist: $("markDist").value, markTime: $("markTime").value,
+    plan: $("plan").value, start: $("start").value,
+    days: [...document.querySelectorAll("[data-day]")].map(s => s.value)
+  }));
+}
+function restoreConfig(){
+  let c; try { c = JSON.parse(localStorage.getItem("firstcfg")); } catch {}
+  if (!c) return false;
+  $("markDist").value = c.markDist; $("markTime").value = c.markTime;
+  $("plan").value = c.plan; $("start").value = c.start;
+  document.querySelectorAll("[data-day]").forEach((s,i) => s.value = c.days[i]);
+  return true;
+}
+
+function calculate(auto){
+  const sel = validate();
+  if (!sel) return;
+  const t5k = to5k(+$("markDist").value, parseTime($("markTime").value));
+  const plan = DATA.plans[+$("plan").value];
+  const start = new Date($("start").value + "T12:00");
+  currentPlan = plan; currentT5k = t5k;
+  loadLog(plan.id, $("start").value);
+  const dayOf = q => sel.indexOf(q);
+  const crossDays = sel.map((v,i) => v === "Entr. Cruzado" ? DAY_NAMES[i] : null).filter(Boolean);
+
+  /* paces table */
+  const P = k => fmtPace(paceVal(k, t5k));
+  $("paceTable").innerHTML = `<tr><th colspan="2">Tus ritmos (5 km en ${fmt(t5k)})</th></tr>` +
+    [["Series 400 m", fmt(paceVal("t400",t5k)) + " (" + fmtPace(paceVal("t400",t5k)*2.5) + ")"],
+     ["Series 800 m", fmt(paceVal("t800",t5k)) + " (" + fmtPace(paceVal("t800",t5k)*1.25) + ")"],
+     ["Series 1600 m", fmt(paceVal("t1600",t5k)) + " (" + fmtPace(paceVal("t1600",t5k)/1.6) + ")"],
+     ["Tempo corto", P("corto")], ["Tempo medio", P("medio")], ["Tempo largo", P("largo")],
+     ["Fácil", P("facil")], ["Ritmo maratón", P("mar")], ["Ritmo ½ maratón", P("mmar")]]
+    .map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
+
+  const pred = predictions(t5k);
+  $("predTable").innerHTML = `<tr><th colspan="3">Predicción de carreras</th></tr>` +
+    ["5 km","10 km","Media maratón","Maratón"].map((n,i) =>
+      `<tr><td>${n}</td><td>${fmt(pred[i])}</td><td>${fmtPace(pred[i]/RACE_DISTS[i])}</td></tr>`).join("");
+
+  $("planTitle").textContent = plan.title;
+
+  /* weeks */
+  $("weeks").innerHTML = plan.weeks.map(w => {
+    const monday = new Date(start); monday.setDate(monday.getDate() + (w.week-1)*7);
+    const dfmt = off => { const d = new Date(monday); d.setDate(d.getDate()+off);
+      return d.toLocaleDateString("es-ES",{day:"numeric",month:"short"}); };
+    const isRace = w.long.some(s => s.pace === "race");
+    const wo = (title, day, body, note, type, reg) => `<div class="wo" data-w="${w.week}" data-t="${type}"><h3>${title} <span class="chip q">calidad</span></h3>
+      <div class="when">${DAY_NAMES[day]} · ${dfmt(day)}</div><ul>${body}</ul>${note ? `<div class="note">${note}</div>` : ""}${reg}</div>`;
+    return `<div class="week${isRace ? " race" : ""}">
+      <div class="whead"><span class="num">S${w.week}</span>
+        <span class="range">${dfmt(0)} — ${dfmt(6)}</span>
+        <span class="cross">${crossDays.map(d => `<span class="chip e">${d}: cruzado</span>`).join(" ")}</span></div>
+      <div class="wbody">
+        ${wo("Series", dayOf("Series"), seriesLines(w.series, t5k),
+             "CAL 10–20 min con ejercicios (2×100 progresivos, 100 talón-glúteos, 100 rodillas arriba) · ENF 10 min suave",
+             "series", regHTML(w, "series", repTargets(w.series, t5k)))}
+        ${wo("Carrera corta · tempo", dayOf("Carrera Corta"), segLines(w.tempo, t5k),
+             plan.id === "5K" || plan.id === "10K" ? "CAL 1,5 km progresivos · ENF 1,5 km suaves" : "Calentamiento y enfriamiento incluidos en los tramos fáciles",
+             "tempo", regHTML(w, "tempo", [], mainPace(w.tempo)))}
+        ${wo("Carrera larga", dayOf("Carrera Larga"), segLines(w.long, t5k),
+             isRace ? "" : "CAL 2 km más lentos que el ritmo requerido, incluidos en los km del entreno · ENF 10 min de pie o estiramientos",
+             "long", regHTML(w, "long", [], mainPace(w.long)))}
+      </div></div>`;
+  }).join("");
+
+  document.querySelectorAll("#weeks .wo").forEach(updateDiffs);
+  $("out").hidden = false;
+  ["print","expLog","impLog"].forEach(id => $(id).hidden = false);
+  if (!auto) $("out").scrollIntoView({behavior:"smooth"});
+}
+
+$("go").addEventListener("click", () => { saveConfig(); calculate(false); });
+$("print").addEventListener("click", () => window.print());
+
+$("expLog").addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(
+    [JSON.stringify({key: logKey, data: logData}, null, 1)], {type: "application/json"}));
+  a.download = logKey.replace(/[:]/g, "-") + ".json";
+  a.click(); URL.revokeObjectURL(a.href);
+});
+$("impLog").addEventListener("click", () => $("impFile").click());
+$("impFile").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  f.text().then(txt => {
+    const obj = JSON.parse(txt);
+    if (!obj.key || !obj.key.startsWith("firstlog:")) throw new Error("formato");
+    localStorage.setItem(obj.key, JSON.stringify(obj.data));
+    if (obj.key === logKey){ logData = obj.data; calculate(true); }
+    $("msgs").innerHTML = `<span class="good">✓ Registros importados (${obj.key.split(":")[1]})</span>`;
+  }).catch(() => {
+    $("msgs").innerHTML = `<span class="bad">✕ El archivo no es un registro válido exportado por esta app.</span>`;
+  }).finally(() => { e.target.value = ""; });
+});
+
+if (restoreConfig()){ validate(); calculate(true); }
+</script>
+
+</body>
+</html>
