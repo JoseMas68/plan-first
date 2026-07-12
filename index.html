@@ -385,7 +385,8 @@ $("weeks") && $("weeks").addEventListener("input", e => {
   const g = woLog(+wo.dataset.w, wo.dataset.t);
   if (el.dataset.reg === "reps"){ (g.reps = g.reps || [])[+el.dataset.i] = el.value; }
   else if (el.dataset.reg === "done"){ g.done = el.checked;
-    wo.querySelector(".okmark").textContent = el.checked ? "✓" : ""; }
+    wo.querySelector(".okmark").textContent = el.checked ? "✓" : "";
+    if (el.checked) confetti(el); }
   else g[el.dataset.reg] = el.value;
   saveLog();
   updateDiffs(wo);
@@ -497,6 +498,39 @@ function calculate(auto){
   $("out").hidden = false;
   ["print","expLog","impLog"].forEach(id => $(id).hidden = false);
   if (!auto) $("out").scrollIntoView({behavior:"smooth"});
+}
+
+/* ---------- confeti al marcar un entrenamiento como realizado ---------- */
+let cfCanvas = null, cfParts = [], cfRaf = 0;
+function confetti(el){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const r = el.getBoundingClientRect();
+  const x = r.left + r.width/2, y = r.top + r.height/2;
+  if (!cfCanvas){
+    cfCanvas = document.createElement("canvas");
+    Object.assign(cfCanvas.style, {position:"fixed", inset:"0", pointerEvents:"none", zIndex:"999"});
+    document.body.appendChild(cfCanvas);
+  }
+  cfCanvas.width = innerWidth; cfCanvas.height = innerHeight;
+  const COLORS = ["#9B222B","#E06E75","#F2B705","#3D8B57","#FFFFFF"];
+  for (let i = 0; i < 90; i++){
+    const a = Math.random()*Math.PI*2, v = 4 + Math.random()*7;
+    cfParts.push({x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - 4, w:5+Math.random()*5, h:3+Math.random()*4,
+      c:COLORS[i % COLORS.length], rot:Math.random()*Math.PI, vr:(Math.random()-.5)*.3, life:70+Math.random()*40});
+  }
+  if (!cfRaf) cfTick();
+}
+function cfTick(){
+  const ctx = cfCanvas.getContext("2d");
+  ctx.clearRect(0, 0, cfCanvas.width, cfCanvas.height);
+  cfParts = cfParts.filter(p => p.life-- > 0 && p.y < cfCanvas.height + 20);
+  for (const p of cfParts){
+    p.x += p.vx; p.y += p.vy; p.vy += .25; p.vx *= .99; p.rot += p.vr;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    ctx.globalAlpha = Math.min(1, p.life/30);
+    ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h); ctx.restore();
+  }
+  cfRaf = cfParts.length ? requestAnimationFrame(cfTick) : 0;
 }
 
 /* ---------- theme switch ---------- */
